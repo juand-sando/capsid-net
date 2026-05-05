@@ -9,14 +9,13 @@ description = "CLI tools for capsid structure and PISA interaction analysis."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "ete3",
+  "gemmi",
   "matplotlib",
   "networkx",
   "numpy",
   "pandas",
   "scikit-learn",
   "scipy",
-  "seaborn",
 ]
 
 [project.scripts]

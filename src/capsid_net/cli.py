@@ -4,7 +4,7 @@ import os
 from capsid_net.pipeline import com
 from capsid_net.pipeline import network
 from capsid_net.pipeline import normals
-from capsid_net.pipeline import pisa
+from capsid_net.pipeline import preprocess
 
 
 def run_pipeline(args):
@@ -14,15 +14,12 @@ def run_pipeline(args):
 
     com.run(argparse.Namespace(structure=args.structure, output=com_output))
 
-    pisa.run_analysis(
+    preprocess.run_analysis(
         argparse.Namespace(
-            interactions=args.pisa,
-            classes=args.classes,
+            interactions=args.interactions,
             output=args.output,
             rename_file=args.rename,
             grouping_file=args.grouping,
-            group_capsomers=args.group_capsomers,
-            group_zippers=args.group_zippers,
         )
     )
 
@@ -32,7 +29,7 @@ def run_pipeline(args):
             prot_classes=args.classes,
             rename=args.rename,
             grouping=args.grouping,
-            relatedness=os.path.join(args.output, "relatedness_matrix.csv"),
+            interaction=os.path.join(args.output, "interaction_matrix.csv"),
             custom_filter=args.custom_filter,
             output=args.output,
             node_colors=args.node_colors,
@@ -59,13 +56,15 @@ def build_parser():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     com.build_parser(subparsers.add_parser("com", help="Calculate chain centers of mass"))
-    pisa.build_parser(subparsers.add_parser("pisa", help="Process PISA interaction tables"))
+    preprocess.build_parser(
+        subparsers.add_parser("preprocess", help="Process interaction tables into grouped interaction matrices")
+    )
     normals.build_parser(subparsers.add_parser("normals", help="Compute capsomer centers, normals, and angle outputs"))
     network.build_parser(subparsers.add_parser("network", help="Render interaction network plots"))
 
     run_parser = subparsers.add_parser("run", help="Run the end-to-end pipeline")
     run_parser.add_argument("--structure", required=True, help="Path to the input structure file")
-    run_parser.add_argument("--pisa", required=True, help="Path to the input PISA interactions CSV")
+    run_parser.add_argument("--interactions", required=True, help="Path to the input interactions CSV")
     run_parser.add_argument("--classes", required=True, help="Path to the protein classes CSV")
     run_parser.add_argument("--rename", required=True, help="Path to the rename CSV")
     run_parser.add_argument("--grouping", required=True, help="Path to the grouping CSV")
@@ -73,8 +72,6 @@ def build_parser():
     run_parser.add_argument("--output", required=True, help="Output directory")
     run_parser.add_argument("--custom_filter", help="Optional group filter file for the normals stage")
     run_parser.add_argument("--node_colors", help="Optional node color CSV for the normals stage")
-    run_parser.add_argument("--group_capsomers", action="store_true", help="Enable capsomer grouping in the PISA stage")
-    run_parser.add_argument("--group_zippers", action="store_true", help="Enable zipper grouping in the PISA stage")
     run_parser.add_argument("--use_saltbridges", action="store_true", help="Use Dsb values for the network stage")
     run_parser.add_argument("--pisa_mod_file", help="Optional modified PISA CSV with Dsb values")
     run_parser.set_defaults(func=run_pipeline)

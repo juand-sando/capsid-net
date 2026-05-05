@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from capsid_net.pipeline.pisa import main
+from capsid_net.pipeline.preprocess import main
 
 
 if __name__ == "__main__":

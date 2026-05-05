@@ -108,16 +108,16 @@ def calculate_distances(df):
     return cdist(coords, coords)
 
 
-def calculate_angles(df, relatedness_file):
-    relatedness_df = pd.read_csv(relatedness_file, index_col=0)
+def calculate_angles(df, interaction_file):
+    interaction_df = pd.read_csv(interaction_file, index_col=0)
     group_names = df["group"].values
 
-    missing = [name for name in group_names if name not in relatedness_df.index]
+    missing = [name for name in group_names if name not in interaction_df.index]
     if missing:
-        raise ValueError(f"The following group names are missing from relatedness.csv: {missing}")
+        raise ValueError(f"The following group names are missing from interaction_matrix.csv: {missing}")
 
-    relatedness_subset = relatedness_df.loc[group_names, group_names].values
-    interaction_mask = relatedness_subset < 1
+    interaction_subset = interaction_df.loc[group_names, group_names].values
+    interaction_mask = interaction_subset > 0
 
     normals = df[["nx", "ny", "nz"]].values
     normals = normals / np.linalg.norm(normals, axis=1, keepdims=True)
@@ -268,7 +268,7 @@ def run_analysis(args):
     print(f"Saved center + normal vectors to: {output_csv}")
 
     distance_matrix = calculate_distances(center_normal_df)
-    angle_matrix = calculate_angles(center_normal_df, args.relatedness)
+    angle_matrix = calculate_angles(center_normal_df, args.interaction)
 
     dist_path = os.path.join(args.output, "capsomer_distances.csv")
     angle_path = os.path.join(args.output, "capsomer_angles.csv")
@@ -287,7 +287,7 @@ def build_parser(parser):
     parser.add_argument("--prot_classes", required=True, help="Protein class CSV file")
     parser.add_argument("--rename", required=True, help="CSV file with rename instructions")
     parser.add_argument("--grouping", required=True, help="CSV file with grouping information")
-    parser.add_argument("--relatedness", required=True, help="CSV file with relatedness matrix")
+    parser.add_argument("--interaction", required=True, help="CSV file with interaction matrix")
     parser.add_argument("--custom_filter", help="Optional .txt file with group names to include in the network")
     parser.add_argument("--output", default="results", help="Output directory for CSVs and plots")
     parser.add_argument("--node_colors", help="Optional CSV mapping group label to color")
