@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "capsid-net"
+version = "0.1.0"
+description = "CLI tools for capsid structure and PISA interaction analysis."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "ete3",
+  "matplotlib",
+  "networkx",
+  "numpy",
+  "pandas",
+  "scikit-learn",
+  "scipy",
+  "seaborn",
+]
+
+[project.scripts]
+capsid-net = "capsid_net.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
