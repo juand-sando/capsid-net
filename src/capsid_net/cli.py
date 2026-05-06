@@ -12,7 +12,7 @@ def run_pipeline(args):
 
     com_output = os.path.join(args.output, "center_of_mass.csv")
 
-    com.run(argparse.Namespace(structure=args.structure, output=com_output))
+    com.run(argparse.Namespace(structure=args.structure, parser="auto", output=com_output))
 
     preprocess.run_analysis(
         argparse.Namespace(
@@ -52,7 +52,10 @@ def run_pipeline(args):
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(prog="capsid-net", description="Capsid structure and PISA interaction analysis CLI.")
+    parser = argparse.ArgumentParser(
+        prog="capsid-net",
+        description="CLI for preprocessing a PISA interaction file and analyzing capsid interaction networks.",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     com.build_parser(subparsers.add_parser("com", help="Calculate chain centers of mass"))

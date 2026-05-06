@@ -114,6 +114,7 @@ def calculate_center_of_mass(structure_filename, parser="auto"):
         raise ValueError(f"Unsupported parser '{parser}'. Expected one of: auto, gemmi, legacy.")
 
     if parser == "legacy":
+        print("Warning: using the legacy COM parser. It is a compatibility fallback and may be less reliable than Gemmi.")
         return calculate_center_of_mass_legacy(structure_filename)
 
     if parser == "gemmi":
@@ -125,6 +126,7 @@ def calculate_center_of_mass(structure_filename, parser="auto"):
     if gemmi is not None:
         return calculate_center_of_mass_gemmi(structure_filename)
 
+    print("Warning: Gemmi is unavailable; falling back to the legacy COM parser, which may be less reliable.")
     return calculate_center_of_mass_legacy(structure_filename)
 
 
@@ -162,7 +164,7 @@ def build_parser(parser):
         "--parser",
         choices=["auto", "gemmi", "legacy"],
         default="auto",
-        help="Parsing backend. 'auto' prefers Gemmi and falls back to the legacy parser for non-CIF input.",
+        help="Parsing backend. 'auto' prefers Gemmi and falls back to the legacy compatibility parser for non-CIF input.",
     )
     parser.add_argument(
         "--output",

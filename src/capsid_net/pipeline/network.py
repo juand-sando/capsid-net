@@ -119,7 +119,7 @@ def summarize_centers(com_df, grouping_df, classes_df):
 
 
 def create_saltbridges_matrix(df):
-    proteins = sorted(set(df["Mono1043.97mer1"]).union(set(df["Monomer2"])))
+    proteins = sorted(set(df["Monomer1"]).union(set(df["Monomer2"])))
     protein_index = {protein: i for i, protein in enumerate(proteins)}
 
     interaction_matrix = np.zeros((len(proteins), len(proteins)))
@@ -187,8 +187,6 @@ def plot_interaction_network(all_centers_df, interaction_matrix, interaction_lab
     is_thread_mask2 = np.array([(label.startswith("r") and "_x1" in label) for label in group_list], dtype=bool)
     points_2d[is_thread_mask2] += np.array([0, -delta_y])
 
-    pos_dict = {group_labels[i]: points_2d[i] for i in range(n)}
-
     graph = nx.Graph()
     for label in group_labels:
         graph.add_node(label)
@@ -225,9 +223,7 @@ def plot_interaction_network(all_centers_df, interaction_matrix, interaction_lab
         else:
             node_sizes.append(250)
 
-    dx, dy = 6.5, 6.5
-    r_mask = np.array([label.startswith("r") for label in group_list], dtype=bool)
-    points_2d[r_mask] += np.array([dx, dy])
+    pos_dict = {group_labels[i]: points_2d[i] for i in range(n)}
 
     nx.draw_networkx_nodes(graph, pos_dict, node_color=node_colors, node_size=node_sizes, ax=ax, edgecolors="black", linewidths=0.8)
 
@@ -237,7 +233,7 @@ def plot_interaction_network(all_centers_df, interaction_matrix, interaction_lab
             return parts[0] + r"$_{" + parts[1] + "}$"
         return label
 
-    label_dict = {label: default_label_formatter(tag_by_label.get(label)) for label in group_labels}
+    label_dict = {label: default_label_formatter(tag_by_label.get(label, label)) for label in group_labels}
     class_by_label = {str(name): str(kind) for name, kind in zip(classes_df["Protein_name"], classes_df["Class"])}
 
     def base_name(label):

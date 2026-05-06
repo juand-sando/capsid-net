@@ -20,7 +20,7 @@ def load_node_colors(node_colors_file):
     df = pd.read_csv(node_colors_file)
     cols = {c.lower(): c for c in df.columns}
     if "label" not in cols or "color" not in cols:
-        raise ValueError("node_colors CSV must have columns 'group' and 'color'.")
+        raise ValueError("node_colors CSV must have columns 'label' and 'color'.")
     group_col = cols["label"]
     color_col = cols["color"]
     return dict(zip(df[group_col].astype(str), df[color_col].astype(str)))
