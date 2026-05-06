@@ -4,7 +4,28 @@ CLI for preprocessing a PISA interaction file and analyzing capsid interaction n
 
 ## Install
 
+### Conda environment
+
+From the repository root, the simplest setup is:
+
 ```bash
+conda env create -f environment.yml
+conda activate capsid-net
+```
+
+This uses [`environment.yml`](/Users/juand.sando/Documents/fv3_repositories/capsid-net/environment.yml:1), which creates a Conda environment with Python and `pip`, then installs `capsid-net` in editable mode from the local checkout. The package dependencies are taken from [`pyproject.toml`](/Users/juand.sando/Documents/fv3_repositories/capsid-net/pyproject.toml:1).
+
+After activation, verify the CLI is available:
+
+```bash
+capsid-net --help
+```
+
+### Manual install
+
+```bash
+conda create -n capsid-net python=3.11 pip -y
+conda activate capsid-net
 pip install -e .
 ```
 
