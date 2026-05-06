@@ -2,8 +2,8 @@ import argparse
 import os
 
 from capsid_net.pipeline import com
+from capsid_net.pipeline import normals as angles
 from capsid_net.pipeline import network
-from capsid_net.pipeline import normals
 from capsid_net.pipeline import preprocess
 
 
@@ -11,41 +11,38 @@ def run_pipeline(args):
     os.makedirs(args.output, exist_ok=True)
 
     com_output = os.path.join(args.output, "center_of_mass.csv")
+    preprocess_config = os.path.join(args.output, "preprocess_config.json")
 
     com.run(argparse.Namespace(structure=args.structure, parser="auto", output=com_output))
 
     preprocess.run_analysis(
         argparse.Namespace(
             interactions=args.interactions,
+            com=com_output,
+            prot_classes=args.classes,
             output=args.output,
-            rename_file=args.rename,
-            grouping_file=args.grouping,
+            rename=args.rename,
+            grouping=args.grouping,
         )
     )
 
-    normals.run_analysis(
+    angles.run_analysis(
         argparse.Namespace(
-            com=com_output,
-            prot_classes=args.classes,
-            rename=args.rename,
-            grouping=args.grouping,
-            interaction=os.path.join(args.output, "interaction_matrix.csv"),
-            custom_filter=args.custom_filter,
+            config=preprocess_config,
+            exclude=args.angles_exclude,
             output=args.output,
+            graph_format=args.graph_format,
             tag_color_csv=args.tag_color_csv,
         )
     )
 
     network.run_analysis(
         argparse.Namespace(
-            interaction=os.path.join(args.output, "interaction_matrix.csv"),
-            com=com_output,
-            grouping=args.grouping,
-            rename=args.rename,
-            classes=args.classes,
+            config=preprocess_config,
+            exclude=args.network_exclude,
+            layout_config=args.network_layout_config,
             output=args.output,
-            use_saltbridges=args.use_saltbridges,
-            pisa_mod_file=args.pisa_mod_file,
+            graph_format=args.graph_format,
             tag_color_csv=args.tag_color_csv,
         )
     )
@@ -60,9 +57,9 @@ def build_parser():
 
     com.build_parser(subparsers.add_parser("com", help="Calculate chain centers of mass"))
     preprocess.build_parser(
-        subparsers.add_parser("preprocess", help="Process interaction tables into grouped interaction matrices")
+        subparsers.add_parser("preprocess", help="Prepare processed interactions, grouped COMs, angles, and a downstream config")
     )
-    normals.build_parser(subparsers.add_parser("normals", help="Compute capsomer centers, normals, and angle outputs"))
+    angles.build_parser(subparsers.add_parser("angles", help="Render capsid angle plots from preprocessed data"))
     network.build_parser(subparsers.add_parser("network", help="Render interaction network plots"))
 
     run_parser = subparsers.add_parser("run", help="Run the end-to-end pipeline")
@@ -73,9 +70,10 @@ def build_parser():
     run_parser.add_argument("--grouping", required=True, help="Path to the grouping CSV")
     run_parser.add_argument("--tag_color_csv", required=True, help="Path to the node tag/color CSV")
     run_parser.add_argument("--output", required=True, help="Output directory")
-    run_parser.add_argument("--custom_filter", help="Optional group filter file for the normals stage")
-    run_parser.add_argument("--use_saltbridges", action="store_true", help="Use Dsb values for the network stage")
-    run_parser.add_argument("--pisa_mod_file", help="Optional modified PISA CSV with Dsb values")
+    run_parser.add_argument("--graph-format", choices=["svg", "png"], default="svg", help="Output format for generated graph figures")
+    run_parser.add_argument("--angles-exclude", help="Optional exclusion file for the angles plot")
+    run_parser.add_argument("--network-exclude", help="Optional exclusion file for the network plot")
+    run_parser.add_argument("--network-layout-config", help="Optional YAML file with network layout adjustment rules")
     run_parser.set_defaults(func=run_pipeline)
 
     return parser
