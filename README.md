@@ -75,15 +75,6 @@ capsid-net network --help
 capsid-net run --help
 ```
 
-Legacy wrapper scripts are also available:
-
-```bash
-python3 get_com.py --help
-python3 preprocess.py --help
-python3 angles.py --help
-python3 network_builder_v3.py --help
-```
-
 ## Workflow
 
 The current workflow is:
