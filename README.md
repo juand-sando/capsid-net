@@ -8,9 +8,11 @@ CLI for preprocessing a PISA interaction file and analyzing capsid interaction n
 
 The program is designed to take:
 
-- a structure file in `.pdb` or `.cif` format containing the coordinates of the asymmetric unit (ASU)
-- optionally, a structure that also includes surrounding copies if you want to inspect interactions at the ASU border
+- a single structure file in `.pdb` or `.cif` format
+  - this structure can contain just the asymmetric unit (ASU)
+  - or the ASU plus surrounding copies if you want to inspect interactions at the ASU border
 - a clean CSV export derived from Protein Interfaces, Surfaces and Assemblies (PISA): <https://www.ebi.ac.uk/pdbe/pisa/>
+  - the PISA table should correspond to the same structure that was used as the coordinate input
 
 It then processes those inputs into reusable intermediate files and final network-style visualizations for downstream inspection.
 
