@@ -12,18 +12,10 @@ from matplotlib.colors import LogNorm
 from scipy.spatial.distance import cdist
 from sklearn.decomposition import PCA
 
+from capsid_net.utils.plot_styles import load_label_style_map
+
 mpl.rcParams["font.family"] = "Arial"
 mpl.rcParams["svg.fonttype"] = "none"
-
-
-def load_node_colors(node_colors_file):
-    df = pd.read_csv(node_colors_file)
-    cols = {c.lower(): c for c in df.columns}
-    if "label" not in cols or "color" not in cols:
-        raise ValueError("node_colors CSV must have columns 'label' and 'color'.")
-    group_col = cols["label"]
-    color_col = cols["color"]
-    return dict(zip(df[group_col].astype(str), df[color_col].astype(str)))
 
 
 def get_center_and_normal(point_dict):
@@ -152,7 +144,16 @@ def calculate_angles(df, interaction_file):
     return angle_matrix
 
 
-def plot_angle_network(center_normal_df, distance_matrix, angle_matrix, output_dir, title="Intercapsomer angle", node_colors_map=None):
+def plot_angle_network(
+    center_normal_df,
+    distance_matrix,
+    angle_matrix,
+    output_dir,
+    title="Intercapsomer angle",
+    tag_by_label=None,
+    node_color_by_label=None,
+    label_color_by_label=None,
+):
     group_labels = center_normal_df["group"].values
     n = len(group_labels)
 
@@ -161,20 +162,6 @@ def plot_angle_network(center_normal_df, distance_matrix, angle_matrix, output_d
     points_2d = pca.fit_transform(points_3d)
 
     pos_dict = {group_labels[i]: points_2d[i] for i in range(len(group_labels))}
-
-    had_subscript = {}
-    display_label = {}
-    for label in group_labels:
-        if "_" in label:
-            base = label.split("_", 1)[0]
-            display_label[label] = base + "'"
-            had_subscript[label] = True
-        else:
-            display_label[label] = label
-            had_subscript[label] = False
-
-    black_labels = {lab: display_label[lab] for lab in group_labels if "_" not in lab}
-    white_labels = {lab: display_label[lab] for lab in group_labels if "_" in lab}
 
     graph = nx.Graph()
     for label in group_labels:
@@ -200,33 +187,27 @@ def plot_angle_network(center_normal_df, distance_matrix, angle_matrix, output_d
                 edge_widths.append(width)
                 graph.add_edge(group_labels[i], group_labels[j])
 
-    node_colors = []
-    if node_colors_map:
-        for label in group_labels:
-            node_colors.append(node_colors_map.get(label, "lightgrey"))
-    else:
-        node_cmap = colormaps["bone"]
-        min_frac = 0.40
-        max_frac = 0.90
-        subscript_numbers = [int(re.search(r"_x(\d+)", label).group(1)) for label in group_labels if "_x" in label]
-        max_num = max(subscript_numbers) if subscript_numbers else 1
-        for label in group_labels:
-            match = re.search(r"_x(\d+)", label)
-            if match:
-                number = int(match.group(1))
-                norm_val = (number / max_num) * (max_frac - min_frac) + min_frac
-                node_colors.append(node_cmap(norm_val))
-            else:
-                node_colors.append("lightgrey")
+    node_colors = [node_color_by_label.get(label, "lightgrey") for label in group_labels]
 
     fig, ax = plt.subplots(figsize=(10, 10), constrained_layout=True)
     nx.draw_networkx_nodes(graph, pos_dict, node_color=node_colors, node_size=500, edgecolors="black", linewidths=0.8, ax=ax)
-    for i, label in enumerate(group_labels):
-        if had_subscript[label]:
-            node_colors[i] = "white"
+    label_dict = {label: tag_by_label.get(label, label) for label in group_labels}
+    labels_by_color = {}
+    for label in group_labels:
+        color = label_color_by_label.get(label, "black")
+        labels_by_color.setdefault(color, {})[label] = label_dict[label]
 
-    nx.draw_networkx_labels(graph, pos_dict, labels=black_labels, font_size=16, font_weight="bold", ax=ax, font_family="Arial")
-    nx.draw_networkx_labels(graph, pos_dict, labels=white_labels, font_size=16, font_weight="bold", ax=ax, font_family="Arial", font_color="white")
+    for color, labels in labels_by_color.items():
+        nx.draw_networkx_labels(
+            graph,
+            pos_dict,
+            labels=labels,
+            font_size=16,
+            font_weight="bold",
+            ax=ax,
+            font_family="Arial",
+            font_color=color,
+        )
     nx.draw_networkx_edges(graph, pos_dict, edgelist=edges, edge_color=edge_colors, width=edge_widths, ax=ax)
 
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -248,7 +229,11 @@ def run_analysis(args):
     os.makedirs(args.output, exist_ok=True)
 
     com_df, classes_df, rename_df, grouping_df = load_dataframes(args.com, args.prot_classes, args.rename, args.grouping)
-    node_colors_map = load_node_colors(args.node_colors) if args.node_colors else None
+    tag_by_label = {}
+    node_color_by_label = {}
+    label_color_by_label = {}
+    if args.tag_color_csv:
+        tag_by_label, node_color_by_label, label_color_by_label = load_label_style_map(args.tag_color_csv)
 
     com_df = apply_renaming(com_df, rename_df)
     capsomer_df = filter_mcp_protomers(com_df, classes_df)
@@ -279,7 +264,15 @@ def run_analysis(args):
     print(f"Distance matrix saved to: {dist_path}")
     print(f"Angle matrix saved to: {angle_path}")
 
-    plot_angle_network(center_normal_df, distance_matrix, angle_matrix, args.output, node_colors_map=node_colors_map)
+    plot_angle_network(
+        center_normal_df,
+        distance_matrix,
+        angle_matrix,
+        args.output,
+        tag_by_label=tag_by_label,
+        node_color_by_label=node_color_by_label,
+        label_color_by_label=label_color_by_label,
+    )
 
 
 def build_parser(parser):
@@ -290,7 +283,10 @@ def build_parser(parser):
     parser.add_argument("--interaction", required=True, help="CSV file with interaction matrix")
     parser.add_argument("--custom_filter", help="Optional .txt file with group names to include in the network")
     parser.add_argument("--output", default="results", help="Output directory for CSVs and plots")
-    parser.add_argument("--node_colors", help="Optional CSV mapping group label to color")
+    parser.add_argument(
+        "--tag_color_csv",
+        help="Optional CSV with columns: label, final_tag, node_color, label_color",
+    )
     parser.set_defaults(func=run_analysis)
     return parser
 

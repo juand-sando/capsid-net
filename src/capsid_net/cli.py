@@ -32,7 +32,7 @@ def run_pipeline(args):
             interaction=os.path.join(args.output, "interaction_matrix.csv"),
             custom_filter=args.custom_filter,
             output=args.output,
-            node_colors=args.node_colors,
+            tag_color_csv=args.tag_color_csv,
         )
     )
 
@@ -74,7 +74,6 @@ def build_parser():
     run_parser.add_argument("--tag_color_csv", required=True, help="Path to the node tag/color CSV")
     run_parser.add_argument("--output", required=True, help="Output directory")
     run_parser.add_argument("--custom_filter", help="Optional group filter file for the normals stage")
-    run_parser.add_argument("--node_colors", help="Optional node color CSV for the normals stage")
     run_parser.add_argument("--use_saltbridges", action="store_true", help="Use Dsb values for the network stage")
     run_parser.add_argument("--pisa_mod_file", help="Optional modified PISA CSV with Dsb values")
     run_parser.set_defaults(func=run_pipeline)

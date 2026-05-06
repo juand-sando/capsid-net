@@ -9,6 +9,8 @@ import pandas as pd
 from matplotlib import colormaps
 from sklearn.decomposition import PCA
 
+from capsid_net.utils.plot_styles import load_label_style_map
+
 mpl.rcParams["font.family"] = "Arial"
 mpl.rcParams["svg.fonttype"] = "none"
 
@@ -86,24 +88,6 @@ def eliminate_fastener_centers(center_df, classes_df):
     return filtered_df
 
 
-def load_label_tag_color_map(csv_path):
-    mapping_df = pd.read_csv(csv_path)
-
-    required_columns = {"label", "final_tag", "color"}
-    missing = required_columns - set(mapping_df.columns)
-    if missing:
-        raise ValueError(f"Missing required columns in {csv_path}: {missing}")
-
-    mapping_df["label"] = mapping_df["label"].astype("string").str.strip()
-    mapping_df["final_tag"] = mapping_df["final_tag"].astype("string").str.strip()
-    mapping_df["color"] = mapping_df["color"].astype("string").str.strip()
-    mapping_df = mapping_df[mapping_df["label"] != ""]
-
-    tag_by_label = dict(zip(mapping_df["label"], mapping_df["final_tag"]))
-    color_by_label = dict(zip(mapping_df["label"], mapping_df["color"]))
-    return tag_by_label, color_by_label
-
-
 def summarize_centers(com_df, grouping_df, classes_df):
     groupings = build_group_dictionaries(com_df, grouping_df)
     center_df = compute_centers(groupings)
@@ -133,7 +117,17 @@ def create_saltbridges_matrix(df):
     return interaction_matrix, proteins
 
 
-def plot_interaction_network(all_centers_df, interaction_matrix, interaction_labels, classes_df, output_dir, title="Surface Area Interactions", tag_by_label=None, color_by_label=None):
+def plot_interaction_network(
+    all_centers_df,
+    interaction_matrix,
+    interaction_labels,
+    classes_df,
+    output_dir,
+    title="Surface Area Interactions",
+    tag_by_label=None,
+    node_color_by_label=None,
+    label_color_by_label=None,
+):
     all_centers_df = all_centers_df.set_index("group").reindex(interaction_labels).reset_index()
 
     valid_mask = ~all_centers_df["group"].astype("string").fillna("").str.startswith(("m", "n"))
@@ -210,7 +204,7 @@ def plot_interaction_network(all_centers_df, interaction_matrix, interaction_lab
                 edge_widths.append((area / max_area) * width_scale + 0.5)
                 graph.add_edge(group_labels[i], group_labels[j])
 
-    node_colors = [color_by_label.get(label, "#777777") for label in group_labels]
+    node_colors = [node_color_by_label.get(label, "#777777") for label in group_labels]
 
     fig, ax = plt.subplots(figsize=(10, 8), constrained_layout=True)
 
@@ -227,31 +221,22 @@ def plot_interaction_network(all_centers_df, interaction_matrix, interaction_lab
 
     nx.draw_networkx_nodes(graph, pos_dict, node_color=node_colors, node_size=node_sizes, ax=ax, edgecolors="black", linewidths=0.8)
 
-    def default_label_formatter(label):
-        parts = label.split("_")
-        if len(parts) == 2 and parts[1]:
-            return parts[0] + r"$_{" + parts[1] + "}$"
-        return label
+    label_dict = {label: tag_by_label.get(label, label) for label in group_labels}
+    labels_by_color = {}
+    for label in group_labels:
+        color = label_color_by_label.get(label, "black")
+        labels_by_color.setdefault(color, {})[label] = label_dict[label]
 
-    label_dict = {label: default_label_formatter(tag_by_label.get(label, label)) for label in group_labels}
-    class_by_label = {str(name): str(kind) for name, kind in zip(classes_df["Protein_name"], classes_df["Class"])}
-
-    def base_name(label):
-        return label.split("_x")[0]
-
-    labels_mcp_1 = {
-        label: label_dict[label]
-        for label in group_labels
-        if (class_by_label.get(base_name(label), "").lower() == "mcp") and "_" not in label
-    }
-    labels_mcp_2 = {
-        label: label_dict[label]
-        for label in group_labels
-        if (class_by_label.get(base_name(label), "").lower() == "mcp") and "_" in label
-    }
-
-    nx.draw_networkx_labels(graph, pos_dict, labels=labels_mcp_1, font_family="Arial", font_size=16, font_weight="bold")
-    nx.draw_networkx_labels(graph, pos_dict, labels=labels_mcp_2, font_family="Arial", font_size=16, font_color="white", font_weight="bold")
+    for color, labels in labels_by_color.items():
+        nx.draw_networkx_labels(
+            graph,
+            pos_dict,
+            labels=labels,
+            font_family="Arial",
+            font_size=16,
+            font_color=color,
+            font_weight="bold",
+        )
     nx.draw_networkx_edges(graph, pos_dict, edgelist=edges, edge_color=edge_colors, width=edge_widths, ax=ax)
 
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -275,7 +260,7 @@ def run_analysis(args):
     interaction_matrix, interaction_labels, com_df, classes_df, rename_df, grouping_df = load_dataframes(
         args.interaction, args.com, args.classes, args.rename, args.grouping
     )
-    tag_by_label, color_by_label = load_label_tag_color_map(args.tag_color_csv)
+    tag_by_label, node_color_by_label, label_color_by_label = load_label_style_map(args.tag_color_csv)
 
     if args.use_saltbridges:
         if not args.pisa_mod_file:
@@ -301,7 +286,8 @@ def run_analysis(args):
         classes_df,
         args.output,
         tag_by_label=tag_by_label,
-        color_by_label=color_by_label,
+        node_color_by_label=node_color_by_label,
+        label_color_by_label=label_color_by_label,
     )
 
 
@@ -314,7 +300,12 @@ def build_parser(parser):
     parser.add_argument("--output", required=True, help="Output directory to save results")
     parser.add_argument("--use_saltbridges", action="store_true", help="Use Dsb values from a modified PISA CSV instead of area matrix")
     parser.add_argument("--pisa_mod_file", type=str, help="Path to PISA modified CSV containing Monomer1, Monomer2, and Dsb columns")
-    parser.add_argument("--tag_color_csv", type=str, required=True, help="CSV with columns: label, final_tag, color")
+    parser.add_argument(
+        "--tag_color_csv",
+        type=str,
+        required=True,
+        help="CSV with columns: label, final_tag, node_color, label_color",
+    )
     parser.set_defaults(func=run_analysis)
     return parser
 
