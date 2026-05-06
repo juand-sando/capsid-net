@@ -1,0 +1,24 @@
+node_sizes:
+  default: 250
+  by_class:
+    MCP: 400
+  by_label:
+    DE_x1: 220
+    DE_x2: 220
+
+rules:
+  - type: label_shift
+    labels: [DE_x1]
+    dx: 15
+    dy: -5
+
+  - type: class_shift
+    classes: [Decoration]
+    dx: 5
+    dy: 0
+
+  - type: region_shift
+    x_gt: 1.5
+    y_gt: 10
+    dx: 10
+    dy: 10

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "output_dir": "./results",
+  "inputs": {
+    "interactions": "./examples/interactions.csv",
+    "com": "./examples/center_of_mass.csv",
+    "prot_classes": "./examples/prot_classes.csv",
+    "rename": "./examples/rename.csv",
+    "grouping": "./examples/groupings.csv"
+  },
+  "outputs": {
+    "pisa_processed": "./results/pisa_processed.csv",
+    "interaction_matrix": "./results/interaction_matrix.csv",
+    "grouped_coms": "./results/grouped_coms.csv",
+    "capsid_angles": "./results/capsid_angles.csv"
+  }
+}

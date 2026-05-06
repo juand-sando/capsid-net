@@ -1,0 +1,4 @@
+# Remove groups from the angle plot by name or by class.
+Chains:
+DE_x1
+DE_x2

@@ -1,0 +1,5 @@
+##,Id,Symmetry_operation,Sym_Id,Monomer1,Monomer2,Area,DeltaG,Nhb,Nsb,Nds
+1,7,"x,y,z",1,A_x1,A_x2,50,-1.2,1,0,0
+2,7,"x,y,z",1,B_x1,C_x2,20,-0.6,0,1,0
+3,7,"x,y,z",1,A_x1,D_x1,100,-3.5,2,1,0
+4,7,"x,y,z",1,C_x2,E_x2,80,-2.8,1,1,0

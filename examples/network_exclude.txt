@@ -1,0 +1,3 @@
+# Remove groups from the interaction network by name or by class.
+Class:
+Decoration
