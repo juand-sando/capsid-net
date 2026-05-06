@@ -2,6 +2,41 @@
 
 CLI for preprocessing a PISA interaction file and analyzing capsid interaction networks.
 
+## Overview
+
+`capsid-net` builds interaction-network representations for complex viral capsids, including the large capsids found in Nucleocytoviricota.
+
+The program is designed to take:
+
+- a structure file in `.pdb` or `.cif` format containing the coordinates of the asymmetric unit (ASU)
+- optionally, a structure that also includes surrounding copies if you want to inspect interactions at the ASU border
+- a clean CSV export derived from Protein Interfaces, Surfaces and Assemblies (PISA): <https://www.ebi.ac.uk/pdbe/pisa/>
+
+It then processes those inputs into reusable intermediate files and final network-style visualizations for downstream inspection.
+
+The current workflow supports two closely related analysis modes:
+
+### 1. Interaction-network analysis
+
+`capsid-net` uses pairwise interface tables derived from PISA to build an outer capsid interaction network. In this workflow, buried surface area (BSA) values from individual protomer–protomer contacts are parsed, renamed, regrouped into higher-order functional units, and then aggregated into unit-level interaction strengths. This is intended to simplify the representation of large capsids and better reflect assembly-level organization rather than treating every chain-chain contact as an independent edge.
+
+In practical terms, the preprocessing stage:
+
+- reads the raw PISA interaction table
+- applies the renaming and grouping scheme you provide
+- sums interface measurements over all protomer–protomer contacts connecting the same pair of functional units
+- writes a processed interaction table and an interaction matrix that can be rendered as a capsid interaction network
+
+This is the part of the program used to study BSA-driven interaction patterns between capsomer-level units.
+
+### 2. Capsid curvature analysis
+
+`capsid-net` also supports curvature-style analysis focused on major capsid protein (MCP) capsomers. For this mode, the tool starts from the atomic coordinates in the input structure, computes the centre of mass of each protomer, and then uses the three MCP protomer centres associated with each capsomer to define a local surface patch and its outward normal vector.
+
+Neighbouring MCP capsomers are then compared by measuring the angle between their surface normals. These pairwise capsomer angles are written to a matrix and can be rendered as an angle-colored graph for visual inspection of local curvature relationships across the capsid surface.
+
+This is the part of the program used to study intercapsomer curvature geometry rather than interface strength alone.
+
 ## Install
 
 ### Conda environment
