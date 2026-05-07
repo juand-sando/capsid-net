@@ -1,6 +1,6 @@
 # capsid-net
 
-CLI for preprocessing a PISA interaction file and analyzing capsid interaction networks.
+CLI for processing a capsid model (PDB/CIF) and its associated PISA interaction file to analyze capsids through interaction networks.
 
 ## Overview
 
@@ -11,7 +11,7 @@ The program is designed to take:
 - a single structure file in `.pdb` or `.cif` format
   - this structure can contain just the asymmetric unit (ASU)
   - or the ASU plus surrounding copies if you want to inspect interactions at the ASU border
-- a clean CSV export derived from Protein Interfaces, Surfaces and Assemblies (PISA): <https://www.ebi.ac.uk/pdbe/pisa/>
+- the output of Protein Interfaces, Surfaces and Assemblies (PISA) in a clean CSV format (<https://www.ebi.ac.uk/pdbe/pisa/>)
   - the PISA table should correspond to the same structure that was used as the coordinate input
 
 It then processes those inputs into reusable intermediate files and final network-style visualizations for downstream inspection.
@@ -29,7 +29,7 @@ In practical terms, the preprocessing stage:
 - sums interface measurements over all protomer–protomer contacts connecting the same pair of functional units
 - writes a processed interaction table and an interaction matrix that can be rendered as a capsid interaction network
 
-This is the part of the program used to study BSA-driven interaction patterns between capsomer-level units.
+This is the part of the program used to study BSA-driven interaction patterns between the components of the capsid.
 
 ### 2. Capsid curvature analysis
 
@@ -186,6 +186,8 @@ Example shape:
 
 ### `rename.csv`
 
+This file handles the fact that, when studying the interactions of an ASU plus its surroundings, equivalent chains in different ASUs can have different chain IDs. Here you can rename chain IDs to a shared base ID plus a suffix indicating which ASU they come from. This allows you to apply the same downstream rules across all copies. Renaming is also the first transformation applied, so subsequent files should use the renamed chain IDs.
+
 Required columns:
 
 ```csv
@@ -193,6 +195,8 @@ Chmx_rename,PISA_rename
 ```
 
 ### `groupings.csv`
+
+If you know that different chains belong to a specific unit, for example because the BSA of their interface is much higher than the rest, as in MCP capsomers, you can group them together. If you have renamed the chains of neighbouring ASUs to match the IDs of the original ASU plus their suffixes, you can apply one grouping logic to all of them. Otherwise, you may need to specify the logic for each group separately.
 
 Required columns:
 
@@ -202,6 +206,8 @@ Protomer,Group
 
 ### `prot_classes.csv`
 
+For each chain or grouped unit, define what entity it is, for example `MCP`, `TmP`, or `Penton`, so this annotation can be used downstream. Do not use whitespace in class names.
+
 Required columns:
 
 ```csv
@@ -209,6 +215,8 @@ Protein_name,Class
 ```
 
 ### `tag_color.csv`
+
+This file defines the displayed label and colors for nodes in the plots. Each label can be configured individually.
 
 Required columns:
 
@@ -226,16 +234,14 @@ If a plotted label is missing one or more style entries, the program will print 
 
 ### Exclusion file
 
-The exclusion file is plain text and supports two optional sections:
+The exclusion file is a plain-text list of nodes or classes to ignore during plotting, and it supports two optional sections. For example:
 
 ```text
 Chains:
-ABC_x2
-TM_x1
+tm
 
 Class:
-Fastener
-Decoration
+TmP
 ```
 
 Rules:
